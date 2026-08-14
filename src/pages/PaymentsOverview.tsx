@@ -16,8 +16,12 @@ import {
 } from '@mui/material';
 import { getWalletBalance, sendMoney, withdraw } from '../api/payments';
 import type { WalletBalance } from '../types';
+import { useAuth } from '../context/AuthContext';
+import { EVENT_FINANCE_ROLES } from '../roles';
 
 export default function PaymentsOverview() {
+  const { hasRole } = useAuth();
+  const canManageFunds = hasRole(...EVENT_FINANCE_ROLES);
   const [balance, setBalance] = useState<WalletBalance | null>(null);
   const [error, setError] = useState('');
   const [notice, setNotice] = useState('');
@@ -79,10 +83,12 @@ export default function PaymentsOverview() {
     <Stack spacing={3}>
       <Stack direction="row" justifyContent="space-between" alignItems="center">
         <Typography variant="h5" fontWeight={800}>Wallet</Typography>
-        <Stack direction="row" spacing={1}>
-          <Button variant="outlined" onClick={() => setWithdrawOpen(true)}>Withdraw</Button>
-          <Button variant="contained" onClick={() => setSendOpen(true)}>Send money</Button>
-        </Stack>
+        {canManageFunds && (
+          <Stack direction="row" spacing={1}>
+            <Button variant="outlined" onClick={() => setWithdrawOpen(true)}>Withdraw</Button>
+            <Button variant="contained" onClick={() => setSendOpen(true)}>Send money</Button>
+          </Stack>
+        )}
       </Stack>
 
       {error && <Alert severity="error" onClose={() => setError('')}>{error}</Alert>}

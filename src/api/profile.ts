@@ -7,6 +7,8 @@ export interface AdminUser {
   last_name: string;
   full_name: string;
   phone: string;
+  is_superuser: boolean;
+  is_staff: boolean;
 }
 
 export interface Organization {

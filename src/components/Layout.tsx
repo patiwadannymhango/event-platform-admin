@@ -27,12 +27,19 @@ import AccountBalanceWalletIcon from '@mui/icons-material/AccountBalanceWalletOu
 import SwapHorizIcon from '@mui/icons-material/SwapHorizOutlined';
 import LogoutIcon from '@mui/icons-material/LogoutOutlined';
 import PersonIcon from '@mui/icons-material/PersonOutline';
+import BadgeIcon from '@mui/icons-material/BadgeOutlined';
+import NotificationsIcon from '@mui/icons-material/NotificationsNoneOutlined';
+import EventIcon from '@mui/icons-material/EventOutlined';
+import ManageAccountsIcon from '@mui/icons-material/ManageAccountsOutlined';
+import CorporateFareIcon from '@mui/icons-material/CorporateFareOutlined';
+import AccountBalanceIcon from '@mui/icons-material/AccountBalanceOutlined';
 import { useAuth } from '../context/AuthContext';
+import { EVENT_ID } from '../api/client';
 
 const DRAWER_WIDTH = 250;
 
 export default function Layout() {
-  const { logout } = useAuth();
+  const { logout, isSuperuser, organizations, user } = useAuth();
   const navigate = useNavigate();
   const location = useLocation();
   const [paymentsOpen, setPaymentsOpen] = useState(true);
@@ -44,6 +51,14 @@ export default function Layout() {
   }
 
   const isPaymentsSection = location.pathname.startsWith('/payments');
+
+  // Single-event scope for now — the active event's (VITE_EVENT_ID) name,
+  // if resolvable from the caller's memberships, otherwise a generic
+  // fallback (a superuser with no membership row still needs something
+  // to show, and so does anyone before /me/ has resolved).
+  const eventName =
+    organizations.flatMap((org) => org.events).find((e) => e.id === EVENT_ID)?.name ||
+    'Event Admin';
 
   return (
     <Box sx={{ display: 'flex', minHeight: '100vh' }}>
@@ -57,7 +72,7 @@ export default function Layout() {
       >
         <Toolbar sx={{ px: 2.5 }}>
           <Typography variant="subtitle1" fontWeight={800} noWrap>
-            Copperbelt Marathon
+            {eventName}
           </Typography>
         </Toolbar>
         <Divider />
@@ -79,6 +94,33 @@ export default function Layout() {
           >
             <ListItemIcon sx={{ minWidth: 36 }}><PeopleIcon fontSize="small" /></ListItemIcon>
             <ListItemText primary="Registrations" slotProps={{ primary: { fontSize: 14 } }} />
+          </ListItemButton>
+
+          <ListItemButton
+            component={NavLink}
+            to="/participants"
+            sx={{ borderRadius: 1.5, mb: 0.5 }}
+          >
+            <ListItemIcon sx={{ minWidth: 36 }}><BadgeIcon fontSize="small" /></ListItemIcon>
+            <ListItemText primary="Participants" slotProps={{ primary: { fontSize: 14 } }} />
+          </ListItemButton>
+
+          <ListItemButton
+            component={NavLink}
+            to="/notifications"
+            sx={{ borderRadius: 1.5, mb: 0.5 }}
+          >
+            <ListItemIcon sx={{ minWidth: 36 }}><NotificationsIcon fontSize="small" /></ListItemIcon>
+            <ListItemText primary="Notifications" slotProps={{ primary: { fontSize: 14 } }} />
+          </ListItemButton>
+
+          <ListItemButton
+            component={NavLink}
+            to="/events"
+            sx={{ borderRadius: 1.5, mb: 0.5 }}
+          >
+            <ListItemIcon sx={{ minWidth: 36 }}><EventIcon fontSize="small" /></ListItemIcon>
+            <ListItemText primary="Events" slotProps={{ primary: { fontSize: 14 } }} />
           </ListItemButton>
 
           <ListItemButton
@@ -119,6 +161,46 @@ export default function Layout() {
               </ListItemButton>
             </List>
           </Collapse>
+
+          {isSuperuser && (
+            <>
+              <Divider sx={{ my: 1 }} />
+              <Typography
+                variant="overline"
+                color="text.secondary"
+                sx={{ px: 2, fontSize: 11 }}
+              >
+                Platform
+              </Typography>
+
+              <ListItemButton
+                component={NavLink}
+                to="/users"
+                sx={{ borderRadius: 1.5, mb: 0.5, mt: 0.5 }}
+              >
+                <ListItemIcon sx={{ minWidth: 36 }}><ManageAccountsIcon fontSize="small" /></ListItemIcon>
+                <ListItemText primary="Users" slotProps={{ primary: { fontSize: 14 } }} />
+              </ListItemButton>
+
+              <ListItemButton
+                component={NavLink}
+                to="/organizations"
+                sx={{ borderRadius: 1.5, mb: 0.5 }}
+              >
+                <ListItemIcon sx={{ minWidth: 36 }}><CorporateFareIcon fontSize="small" /></ListItemIcon>
+                <ListItemText primary="Organizations" slotProps={{ primary: { fontSize: 14 } }} />
+              </ListItemButton>
+
+              <ListItemButton
+                component={NavLink}
+                to="/payment-providers"
+                sx={{ borderRadius: 1.5, mb: 0.5 }}
+              >
+                <ListItemIcon sx={{ minWidth: 36 }}><AccountBalanceIcon fontSize="small" /></ListItemIcon>
+                <ListItemText primary="Payment providers" slotProps={{ primary: { fontSize: 14 } }} />
+              </ListItemButton>
+            </>
+          )}
         </List>
       </Drawer>
 
@@ -126,7 +208,9 @@ export default function Layout() {
         <AppBar position="sticky" elevation={0} color="transparent">
           <Toolbar sx={{ justifyContent: 'flex-end' }}>
             <IconButton onClick={(e) => setAnchorEl(e.currentTarget)} size="small">
-              <Avatar sx={{ width: 32, height: 32, bgcolor: 'primary.main', fontSize: 14 }}>A</Avatar>
+              <Avatar sx={{ width: 32, height: 32, bgcolor: 'primary.main', fontSize: 14 }}>
+                {(user?.first_name?.[0] || user?.email?.[0] || 'A').toUpperCase()}
+              </Avatar>
             </IconButton>
             <Menu anchorEl={anchorEl} open={!!anchorEl} onClose={() => setAnchorEl(null)}>
               <MenuItem

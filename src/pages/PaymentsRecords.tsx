@@ -3,8 +3,12 @@ import { Alert, Box, Button, Stack, Typography } from '@mui/material';
 import { DataGrid, type GridColDef } from '@mui/x-data-grid';
 import { listPayments, refundPayment } from '../api/payments';
 import type { AdminPayment } from '../types';
+import { useAuth } from '../context/AuthContext';
+import { EVENT_FINANCE_ROLES } from '../roles';
 
 export default function PaymentsRecords() {
+  const { hasRole } = useAuth();
+  const canRefund = hasRole(...EVENT_FINANCE_ROLES);
   const [rows, setRows] = useState<AdminPayment[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState('');
@@ -37,7 +41,7 @@ export default function PaymentsRecords() {
     {
       field: 'actions', headerName: '', width: 100, sortable: false, filterable: false,
       renderCell: (params) =>
-        params.row.status === 'SUCCESS' ? (
+        canRefund && params.row.status === 'SUCCESS' ? (
           <Button size="small" color="error" onClick={() => handleRefund(params.row.id)}>Refund</Button>
         ) : null,
     },

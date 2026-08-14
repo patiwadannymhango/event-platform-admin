@@ -30,8 +30,20 @@ import { exportUrl } from '../api/client';
 import type { AdminRegistration } from '../types';
 import type { RegistrationCategory } from '../api/registrations';
 import { STATUS_OPTIONS } from '../types';
+import { useAuth } from '../context/AuthContext';
+import { EVENT_REGISTRATION_MANAGE_ROLES } from '../roles';
 
-function StatusCell({ row, onChange }: { row: AdminRegistration; onChange: (status: string) => void }) {
+function StatusCell({
+  row,
+  editable,
+  onChange,
+}: {
+  row: AdminRegistration;
+  editable: boolean;
+  onChange: (status: string) => void;
+}) {
+  if (!editable) return <>{row.status}</>;
+
   return (
     <Select
       value={row.status}
@@ -48,6 +60,8 @@ function StatusCell({ row, onChange }: { row: AdminRegistration; onChange: (stat
 }
 
 export default function Registrations() {
+  const { hasRole } = useAuth();
+  const canManageRegistrations = hasRole(...EVENT_REGISTRATION_MANAGE_ROLES);
   const [rows, setRows] = useState<AdminRegistration[]>([]);
   const [count, setCount] = useState(0);
   const [search, setSearch] = useState('');
@@ -160,21 +174,29 @@ export default function Registrations() {
     {
       field: 'status', headerName: 'Status', width: 180,
       renderCell: (params) => (
-        <StatusCell row={params.row} onChange={(status) => handleStatusChange(params.row.id, status)} />
+        <StatusCell
+          row={params.row}
+          editable={canManageRegistrations}
+          onChange={(status) => handleStatusChange(params.row.id, status)}
+        />
       ),
     },
     {
       field: 'registered_at', headerName: 'Registered', width: 130,
       valueFormatter: (v) => new Date(v as string).toLocaleDateString(),
     },
-    {
-      field: 'actions', headerName: '', width: 60, sortable: false, filterable: false,
-      renderCell: (params) => (
-        <Button size="small" color="error" onClick={() => handleDelete(params.row.id)} sx={{ minWidth: 0 }}>
-          <DeleteIcon fontSize="small" />
-        </Button>
-      ),
-    },
+    ...(canManageRegistrations
+      ? [
+          {
+            field: 'actions', headerName: '', width: 60, sortable: false, filterable: false,
+            renderCell: (params: { row: AdminRegistration }) => (
+              <Button size="small" color="error" onClick={() => handleDelete(params.row.id)} sx={{ minWidth: 0 }}>
+                <DeleteIcon fontSize="small" />
+              </Button>
+            ),
+          } as GridColDef<AdminRegistration>,
+        ]
+      : []),
   ];
 
   return (
@@ -182,12 +204,16 @@ export default function Registrations() {
       <Stack direction="row" justifyContent="space-between" alignItems="center">
         <Typography variant="h5" fontWeight={800}>Registrations</Typography>
         <Stack direction="row" spacing={1}>
-          <Button startIcon={<AddIcon />} variant="outlined" onClick={openManualDialog}>
-            Register participant
-          </Button>
-          <Button startIcon={<UploadFileIcon />} variant="outlined" onClick={() => setUploadOpen(true)}>
-            Bulk upload
-          </Button>
+          {canManageRegistrations && (
+            <>
+              <Button startIcon={<AddIcon />} variant="outlined" onClick={openManualDialog}>
+                Register participant
+              </Button>
+              <Button startIcon={<UploadFileIcon />} variant="outlined" onClick={() => setUploadOpen(true)}>
+                Bulk upload
+              </Button>
+            </>
+          )}
           <Button startIcon={<DownloadIcon />} variant="contained" href={exportUrl()} target="_blank" rel="noreferrer">
             Export
           </Button>

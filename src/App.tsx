@@ -1,5 +1,5 @@
 import { BrowserRouter, Routes, Route, Navigate } from 'react-router-dom';
-import { ThemeProvider, CssBaseline } from '@mui/material';
+import { ThemeProvider, CssBaseline, Box, CircularProgress } from '@mui/material';
 import { theme } from './theme';
 import { AuthProvider, useAuth } from './context/AuthContext';
 import Layout from './components/Layout';
@@ -10,10 +10,29 @@ import PaymentsOverview from './pages/PaymentsOverview';
 import PaymentsTransactions from './pages/PaymentsTransactions';
 import PaymentsRecords from './pages/PaymentsRecords';
 import Profile from './pages/Profile';
+import Users from './pages/Users';
+import Organizations from './pages/Organizations';
+import Events from './pages/Events';
+import PaymentProviders from './pages/PaymentProviders';
+import Participants from './pages/Participants';
+import Notifications from './pages/Notifications';
 
 function ProtectedRoute({ children }: { children: React.ReactNode }) {
-  const { authenticated } = useAuth();
+  const { authenticated, loading } = useAuth();
   if (!authenticated) return <Navigate to="/login" replace />;
+  if (loading) {
+    return (
+      <Box sx={{ display: 'flex', justifyContent: 'center', alignItems: 'center', height: '100vh' }}>
+        <CircularProgress />
+      </Box>
+    );
+  }
+  return <>{children}</>;
+}
+
+function SuperuserRoute({ children }: { children: React.ReactNode }) {
+  const { isSuperuser } = useAuth();
+  if (!isSuperuser) return <Navigate to="/" replace />;
   return <>{children}</>;
 }
 
@@ -39,9 +58,36 @@ export default function App() {
             >
               <Route path="/" element={<Dashboard />} />
               <Route path="/registrations" element={<Registrations />} />
+              <Route path="/participants" element={<Participants />} />
+              <Route path="/notifications" element={<Notifications />} />
               <Route path="/payments/overview" element={<PaymentsOverview />} />
               <Route path="/payments/transactions" element={<PaymentsTransactions />} />
               <Route path="/payments/records" element={<PaymentsRecords />} />
+              <Route path="/events" element={<Events />} />
+              <Route
+                path="/users"
+                element={
+                  <SuperuserRoute>
+                    <Users />
+                  </SuperuserRoute>
+                }
+              />
+              <Route
+                path="/organizations"
+                element={
+                  <SuperuserRoute>
+                    <Organizations />
+                  </SuperuserRoute>
+                }
+              />
+              <Route
+                path="/payment-providers"
+                element={
+                  <SuperuserRoute>
+                    <PaymentProviders />
+                  </SuperuserRoute>
+                }
+              />
               <Route path="/profile" element={<Profile />} />
             </Route>
           </Routes>
