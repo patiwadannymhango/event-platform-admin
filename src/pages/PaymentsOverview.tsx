@@ -14,7 +14,7 @@ import {
   TextField,
   Typography,
 } from '@mui/material';
-import { getWalletBalance, sendMoney, withdraw } from '../api/payments';
+import { getWalletBalance, liveBalanceAmount, sendMoney, withdraw } from '../api/payments';
 import type { WalletBalance } from '../types';
 import { useAuth } from '../context/AuthContext';
 import { EVENT_FINANCE_ROLES } from '../roles';
@@ -116,10 +116,10 @@ export default function PaymentsOverview() {
             <Card variant="outlined">
               <CardContent>
                 <Typography variant="overline" color="text.secondary">Live Lipila balance</Typography>
-                {balance.live_balance ? (
-                  <pre style={{ fontSize: 12, margin: 0, whiteSpace: 'pre-wrap' }}>
-                    {JSON.stringify(balance.live_balance, null, 2)}
-                  </pre>
+                {liveBalanceAmount(balance.live_balance) !== null ? (
+                  <Typography variant="h4" fontWeight={800}>
+                    K{liveBalanceAmount(balance.live_balance)!.toFixed(2)}
+                  </Typography>
                 ) : (
                   <Typography variant="body2" color="text.secondary">
                     {balance.live_balance_error || 'Unavailable'}

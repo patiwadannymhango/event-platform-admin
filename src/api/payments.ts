@@ -16,6 +16,13 @@ export async function getWalletBalance(): Promise<WalletBalance> {
   return apiFetch(`/api/v1/payments/admin/events/${EVENT_ID}/wallet/balance/`);
 }
 
+/** Lipila's raw response is `{ success, message, data: { balance } }` — pull just the number. */
+export function liveBalanceAmount(live: WalletBalance['live_balance']): number | null {
+  if (!live || typeof live !== 'object') return null;
+  const data = (live as { data?: { balance?: unknown } }).data;
+  return typeof data?.balance === 'number' ? data.balance : null;
+}
+
 export async function listTransactions(page = 1): Promise<Paginated<AdminTransaction>> {
   return apiFetch(`/api/v1/payments/admin/events/${EVENT_ID}/transactions/?page=${page}`);
 }

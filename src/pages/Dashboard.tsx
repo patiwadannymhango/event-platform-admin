@@ -3,7 +3,7 @@ import { Box, Card, CardContent, Grid, Stack, Typography, Chip, Alert } from '@m
 import { DataGrid, type GridColDef } from '@mui/x-data-grid';
 import { PieChart } from '@mui/x-charts/PieChart';
 import { BarChart } from '@mui/x-charts/BarChart';
-import { getDashboard, getWalletBalance } from '../api/payments';
+import { getDashboard, getWalletBalance, liveBalanceAmount } from '../api/payments';
 import { listRegistrations } from '../api/registrations';
 import type { DashboardStats, WalletBalance, AdminRegistration } from '../types';
 
@@ -95,6 +95,14 @@ export default function Dashboard() {
         <Grid item xs={12} sm={6} md={4}>
           <StatCard label="Wallet balance (ledger)" value={`K${balance.ledger_balance}`} highlight />
         </Grid>
+        {liveBalanceAmount(balance.live_balance) !== null && (
+          <Grid item xs={12} sm={6} md={4}>
+            <StatCard
+              label="Live Lipila balance"
+              value={`K${liveBalanceAmount(balance.live_balance)!.toFixed(2)}`}
+            />
+          </Grid>
+        )}
       </Grid>
 
       <Grid container spacing={2}>
