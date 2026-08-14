@@ -1,6 +1,7 @@
 import { BrowserRouter, Routes, Route, Navigate } from 'react-router-dom';
-import { ThemeProvider, CssBaseline, Box, CircularProgress } from '@mui/material';
-import { theme } from './theme';
+import { CssBaseline, Box, CircularProgress } from '@mui/material';
+import AppTheme from './theme/AppTheme';
+import { dataGridCustomizations } from './theme/customizations/dataGrid';
 import { AuthProvider, useAuth } from './context/AuthContext';
 import Layout from './components/Layout';
 import Login from './pages/Login';
@@ -38,8 +39,8 @@ function SuperuserRoute({ children }: { children: React.ReactNode }) {
 
 export default function App() {
   return (
-    <ThemeProvider theme={theme}>
-      <CssBaseline />
+    <AppTheme themeComponents={{ ...dataGridCustomizations }}>
+      <CssBaseline enableColorScheme />
       <AuthProvider>
         {/* import.meta.env.BASE_URL is Vite's `base` (defaults to '/'
             now that this deploys standalone on Vercel), so the routes
@@ -93,6 +94,6 @@ export default function App() {
           </Routes>
         </BrowserRouter>
       </AuthProvider>
-    </ThemeProvider>
+    </AppTheme>
   );
 }

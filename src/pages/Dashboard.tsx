@@ -72,13 +72,13 @@ export default function Dashboard() {
       <Typography variant="h5" fontWeight={800}>Dashboard</Typography>
 
       <Grid container spacing={2}>
-        <Grid xs={12} sm={6} md={4}>
+        <Grid item xs={12} sm={6} md={4}>
           <StatCard label="Total registrations" value={String(stats.total_registrations)} />
         </Grid>
-        <Grid xs={12} sm={6} md={4}>
+        <Grid item xs={12} sm={6} md={4}>
           <StatCard label="Confirmed" value={String(statusCount('CONFIRMED'))} />
         </Grid>
-        <Grid xs={12} sm={6} md={4}>
+        <Grid item xs={12} sm={6} md={4}>
           <StatCard
             label="Pending / awaiting payment"
             value={String(
@@ -86,19 +86,19 @@ export default function Dashboard() {
             )}
           />
         </Grid>
-        <Grid xs={12} sm={6} md={4}>
+        <Grid item xs={12} sm={6} md={4}>
           <StatCard label="Revenue collected" value={`K${stats.revenue_confirmed}`} />
         </Grid>
-        <Grid xs={12} sm={6} md={4}>
+        <Grid item xs={12} sm={6} md={4}>
           <StatCard label="Revenue pending" value={`K${stats.revenue_pending}`} />
         </Grid>
-        <Grid xs={12} sm={6} md={4}>
+        <Grid item xs={12} sm={6} md={4}>
           <StatCard label="Wallet balance (ledger)" value={`K${balance.ledger_balance}`} highlight />
         </Grid>
       </Grid>
 
       <Grid container spacing={2}>
-        <Grid xs={12} md={5}>
+        <Grid item xs={12} md={5}>
           <Card variant="outlined">
             <CardContent>
               <Typography variant="subtitle1" fontWeight={700} gutterBottom>Registrations by status</Typography>
@@ -114,7 +114,7 @@ export default function Dashboard() {
             </CardContent>
           </Card>
         </Grid>
-        <Grid xs={12} md={7}>
+        <Grid item xs={12} md={7}>
           <Card variant="outlined">
             <CardContent>
               <Typography variant="subtitle1" fontWeight={700} gutterBottom>Revenue: collected vs pending</Typography>

@@ -96,7 +96,7 @@ export default function PaymentsOverview() {
 
       {balance && (
         <Grid container spacing={2}>
-          <Grid xs={12} sm={4}>
+          <Grid item xs={12} sm={4}>
             <Card variant="outlined" sx={{ borderColor: 'primary.main' }}>
               <CardContent>
                 <Typography variant="overline" color="text.secondary">Ledger balance</Typography>
@@ -104,7 +104,7 @@ export default function PaymentsOverview() {
               </CardContent>
             </Card>
           </Grid>
-          <Grid xs={12} sm={4}>
+          <Grid item xs={12} sm={4}>
             <Card variant="outlined">
               <CardContent>
                 <Typography variant="overline" color="text.secondary">Pending balance</Typography>
@@ -112,7 +112,7 @@ export default function PaymentsOverview() {
               </CardContent>
             </Card>
           </Grid>
-          <Grid xs={12} sm={4}>
+          <Grid item xs={12} sm={4}>
             <Card variant="outlined">
               <CardContent>
                 <Typography variant="overline" color="text.secondary">Live Lipila balance</Typography>

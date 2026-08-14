@@ -83,19 +83,19 @@ export default function Profile() {
         <CardContent>
           <Typography variant="subtitle1" fontWeight={700} gutterBottom>Profile details</Typography>
           <Grid container spacing={2}>
-            <Grid xs={12} sm={6}>
+            <Grid item xs={12} sm={6}>
               <TextField label="First name" fullWidth value={profileForm.first_name}
                 onChange={(e) => setProfileForm({ ...profileForm, first_name: e.target.value })} />
             </Grid>
-            <Grid xs={12} sm={6}>
+            <Grid item xs={12} sm={6}>
               <TextField label="Last name" fullWidth value={profileForm.last_name}
                 onChange={(e) => setProfileForm({ ...profileForm, last_name: e.target.value })} />
             </Grid>
-            <Grid xs={12} sm={6}>
+            <Grid item xs={12} sm={6}>
               <TextField label="Phone" fullWidth value={profileForm.phone}
                 onChange={(e) => setProfileForm({ ...profileForm, phone: e.target.value })} />
             </Grid>
-            <Grid xs={12} sm={6}>
+            <Grid item xs={12} sm={6}>
               <TextField label="Email" fullWidth value={user.email} disabled
                 helperText="Contact a superuser to change your email" />
             </Grid>

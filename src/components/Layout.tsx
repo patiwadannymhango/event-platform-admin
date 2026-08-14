@@ -1,56 +1,64 @@
+import { NavLink, Outlet, useLocation } from 'react-router-dom';
 import { useState } from 'react';
-import { NavLink, Outlet, useNavigate, useLocation } from 'react-router-dom';
 import {
-  AppBar,
   Avatar,
   Box,
   Collapse,
   Divider,
   Drawer,
-  IconButton,
+  drawerClasses,
   List,
+  ListItem,
   ListItemButton,
   ListItemIcon,
   ListItemText,
-  Menu,
-  MenuItem,
-  Toolbar,
+  Stack,
   Typography,
 } from '@mui/material';
-import DashboardIcon from '@mui/icons-material/DashboardOutlined';
-import PeopleIcon from '@mui/icons-material/PeopleOutline';
-import PaymentsIcon from '@mui/icons-material/PaymentsOutlined';
+import DashboardIcon from '@mui/icons-material/DashboardRounded';
+import PeopleIcon from '@mui/icons-material/PeopleRounded';
+import PaymentsIcon from '@mui/icons-material/PaymentsRounded';
 import ExpandLess from '@mui/icons-material/ExpandLess';
 import ExpandMore from '@mui/icons-material/ExpandMore';
-import ReceiptLongIcon from '@mui/icons-material/ReceiptLongOutlined';
-import AccountBalanceWalletIcon from '@mui/icons-material/AccountBalanceWalletOutlined';
-import SwapHorizIcon from '@mui/icons-material/SwapHorizOutlined';
-import LogoutIcon from '@mui/icons-material/LogoutOutlined';
-import PersonIcon from '@mui/icons-material/PersonOutline';
-import BadgeIcon from '@mui/icons-material/BadgeOutlined';
-import NotificationsIcon from '@mui/icons-material/NotificationsNoneOutlined';
-import EventIcon from '@mui/icons-material/EventOutlined';
-import ManageAccountsIcon from '@mui/icons-material/ManageAccountsOutlined';
-import CorporateFareIcon from '@mui/icons-material/CorporateFareOutlined';
-import AccountBalanceIcon from '@mui/icons-material/AccountBalanceOutlined';
+import ReceiptLongIcon from '@mui/icons-material/ReceiptLongRounded';
+import AccountBalanceWalletIcon from '@mui/icons-material/AccountBalanceWalletRounded';
+import SwapHorizIcon from '@mui/icons-material/SwapHorizRounded';
+import BadgeIcon from '@mui/icons-material/BadgeRounded';
+import NotificationsIcon from '@mui/icons-material/NotificationsRounded';
+import EventIcon from '@mui/icons-material/EventRounded';
+import ManageAccountsIcon from '@mui/icons-material/ManageAccountsRounded';
+import CorporateFareIcon from '@mui/icons-material/CorporateFareRounded';
+import AccountBalanceIcon from '@mui/icons-material/AccountBalanceRounded';
+import NavigateNextRoundedIcon from '@mui/icons-material/NavigateNextRounded';
 import { useAuth } from '../context/AuthContext';
 import { EVENT_ID } from '../api/client';
+import ColorModeIconDropdown from '../theme/ColorModeIconDropdown';
+import OptionsMenu from './OptionsMenu';
 
-const DRAWER_WIDTH = 250;
+const DRAWER_WIDTH = 240;
+
+const PAGE_TITLES: Record<string, string> = {
+  '/': 'Dashboard',
+  '/registrations': 'Registrations',
+  '/participants': 'Participants',
+  '/notifications': 'Notifications',
+  '/events': 'Events',
+  '/payments/overview': 'Wallet',
+  '/payments/transactions': 'Transactions',
+  '/payments/records': 'Payments',
+  '/users': 'Users',
+  '/organizations': 'Organizations',
+  '/payment-providers': 'Payment providers',
+  '/profile': 'Profile',
+};
 
 export default function Layout() {
-  const { logout, isSuperuser, organizations, user } = useAuth();
-  const navigate = useNavigate();
+  const { isSuperuser, organizations, user } = useAuth();
   const location = useLocation();
   const [paymentsOpen, setPaymentsOpen] = useState(true);
-  const [anchorEl, setAnchorEl] = useState<null | HTMLElement>(null);
-
-  function handleLogout() {
-    logout();
-    navigate('/login');
-  }
 
   const isPaymentsSection = location.pathname.startsWith('/payments');
+  const pageTitle = PAGE_TITLES[location.pathname] || 'Dashboard';
 
   // Single-event scope for now — the active event's (VITE_EVENT_ID) name,
   // if resolvable from the caller's memberships, otherwise a generic
@@ -61,178 +69,206 @@ export default function Layout() {
     'Event Admin';
 
   return (
-    <Box sx={{ display: 'flex', minHeight: '100vh' }}>
+    <Box sx={{ display: 'flex' }}>
       <Drawer
         variant="permanent"
         sx={{
           width: DRAWER_WIDTH,
           flexShrink: 0,
-          [`& .MuiDrawer-paper`]: { width: DRAWER_WIDTH, boxSizing: 'border-box' },
+          boxSizing: 'border-box',
+          [`& .${drawerClasses.paper}`]: {
+            width: DRAWER_WIDTH,
+            boxSizing: 'border-box',
+            backgroundColor: 'background.paper',
+          },
         }}
       >
-        <Toolbar sx={{ px: 2.5 }}>
-          <Typography variant="subtitle1" fontWeight={800} noWrap>
+        <Box sx={{ display: 'flex', p: 1.5 }}>
+          <Typography variant="subtitle1" fontWeight={800} noWrap sx={{ px: 1 }}>
             {eventName}
           </Typography>
-        </Toolbar>
+        </Box>
         <Divider />
-        <List sx={{ px: 1, pt: 1 }}>
-          <ListItemButton
-            component={NavLink}
-            to="/"
-            end
-            sx={{ borderRadius: 1.5, mb: 0.5 }}
-          >
-            <ListItemIcon sx={{ minWidth: 36 }}><DashboardIcon fontSize="small" /></ListItemIcon>
-            <ListItemText primary="Dashboard" slotProps={{ primary: { fontSize: 14 } }} />
-          </ListItemButton>
+        <Box sx={{ overflow: 'auto', height: '100%', display: 'flex', flexDirection: 'column' }}>
+          <Stack sx={{ flexGrow: 1, p: 1, justifyContent: 'space-between' }}>
+            <List dense>
+              <ListItem disablePadding sx={{ display: 'block' }}>
+                <ListItemButton component={NavLink} to="/" end selected={location.pathname === '/'}>
+                  <ListItemIcon><DashboardIcon fontSize="small" /></ListItemIcon>
+                  <ListItemText primary="Dashboard" />
+                </ListItemButton>
+              </ListItem>
 
-          <ListItemButton
-            component={NavLink}
-            to="/registrations"
-            sx={{ borderRadius: 1.5, mb: 0.5 }}
-          >
-            <ListItemIcon sx={{ minWidth: 36 }}><PeopleIcon fontSize="small" /></ListItemIcon>
-            <ListItemText primary="Registrations" slotProps={{ primary: { fontSize: 14 } }} />
-          </ListItemButton>
+              <ListItem disablePadding sx={{ display: 'block' }}>
+                <ListItemButton
+                  component={NavLink}
+                  to="/registrations"
+                  selected={location.pathname === '/registrations'}
+                >
+                  <ListItemIcon><PeopleIcon fontSize="small" /></ListItemIcon>
+                  <ListItemText primary="Registrations" />
+                </ListItemButton>
+              </ListItem>
 
-          <ListItemButton
-            component={NavLink}
-            to="/participants"
-            sx={{ borderRadius: 1.5, mb: 0.5 }}
-          >
-            <ListItemIcon sx={{ minWidth: 36 }}><BadgeIcon fontSize="small" /></ListItemIcon>
-            <ListItemText primary="Participants" slotProps={{ primary: { fontSize: 14 } }} />
-          </ListItemButton>
+              <ListItem disablePadding sx={{ display: 'block' }}>
+                <ListItemButton
+                  component={NavLink}
+                  to="/participants"
+                  selected={location.pathname === '/participants'}
+                >
+                  <ListItemIcon><BadgeIcon fontSize="small" /></ListItemIcon>
+                  <ListItemText primary="Participants" />
+                </ListItemButton>
+              </ListItem>
 
-          <ListItemButton
-            component={NavLink}
-            to="/notifications"
-            sx={{ borderRadius: 1.5, mb: 0.5 }}
-          >
-            <ListItemIcon sx={{ minWidth: 36 }}><NotificationsIcon fontSize="small" /></ListItemIcon>
-            <ListItemText primary="Notifications" slotProps={{ primary: { fontSize: 14 } }} />
-          </ListItemButton>
+              <ListItem disablePadding sx={{ display: 'block' }}>
+                <ListItemButton
+                  component={NavLink}
+                  to="/notifications"
+                  selected={location.pathname === '/notifications'}
+                >
+                  <ListItemIcon><NotificationsIcon fontSize="small" /></ListItemIcon>
+                  <ListItemText primary="Notifications" />
+                </ListItemButton>
+              </ListItem>
 
-          <ListItemButton
-            component={NavLink}
-            to="/events"
-            sx={{ borderRadius: 1.5, mb: 0.5 }}
-          >
-            <ListItemIcon sx={{ minWidth: 36 }}><EventIcon fontSize="small" /></ListItemIcon>
-            <ListItemText primary="Events" slotProps={{ primary: { fontSize: 14 } }} />
-          </ListItemButton>
+              <ListItem disablePadding sx={{ display: 'block' }}>
+                <ListItemButton
+                  component={NavLink}
+                  to="/events"
+                  selected={location.pathname === '/events'}
+                >
+                  <ListItemIcon><EventIcon fontSize="small" /></ListItemIcon>
+                  <ListItemText primary="Events" />
+                </ListItemButton>
+              </ListItem>
 
-          <ListItemButton
-            onClick={() => setPaymentsOpen((o) => !o)}
-            selected={isPaymentsSection}
-            sx={{ borderRadius: 1.5, mb: 0.5 }}
-          >
-            <ListItemIcon sx={{ minWidth: 36 }}><PaymentsIcon fontSize="small" /></ListItemIcon>
-            <ListItemText primary="Payments & Wallet" slotProps={{ primary: { fontSize: 14 } }} />
-            {paymentsOpen ? <ExpandLess fontSize="small" /> : <ExpandMore fontSize="small" />}
-          </ListItemButton>
+              <ListItem disablePadding sx={{ display: 'block' }}>
+                <ListItemButton onClick={() => setPaymentsOpen((o) => !o)} selected={isPaymentsSection}>
+                  <ListItemIcon><PaymentsIcon fontSize="small" /></ListItemIcon>
+                  <ListItemText primary="Payments & Wallet" />
+                  {paymentsOpen ? <ExpandLess fontSize="small" /> : <ExpandMore fontSize="small" />}
+                </ListItemButton>
+              </ListItem>
 
-          <Collapse in={paymentsOpen} timeout="auto" unmountOnExit>
-            <List component="div" disablePadding>
-              <ListItemButton
-                component={NavLink}
-                to="/payments/overview"
-                sx={{ borderRadius: 1.5, pl: 4.5, mb: 0.5 }}
-              >
-                <ListItemIcon sx={{ minWidth: 32 }}><AccountBalanceWalletIcon fontSize="small" /></ListItemIcon>
-                <ListItemText primary="Wallet" slotProps={{ primary: { fontSize: 13.5 } }} />
-              </ListItemButton>
-              <ListItemButton
-                component={NavLink}
-                to="/payments/transactions"
-                sx={{ borderRadius: 1.5, pl: 4.5, mb: 0.5 }}
-              >
-                <ListItemIcon sx={{ minWidth: 32 }}><SwapHorizIcon fontSize="small" /></ListItemIcon>
-                <ListItemText primary="Transactions" slotProps={{ primary: { fontSize: 13.5 } }} />
-              </ListItemButton>
-              <ListItemButton
-                component={NavLink}
-                to="/payments/records"
-                sx={{ borderRadius: 1.5, pl: 4.5, mb: 0.5 }}
-              >
-                <ListItemIcon sx={{ minWidth: 32 }}><ReceiptLongIcon fontSize="small" /></ListItemIcon>
-                <ListItemText primary="Payments" slotProps={{ primary: { fontSize: 13.5 } }} />
-              </ListItemButton>
+              <Collapse in={paymentsOpen} timeout="auto" unmountOnExit>
+                <List dense component="div" disablePadding>
+                  <ListItem disablePadding sx={{ display: 'block' }}>
+                    <ListItemButton
+                      component={NavLink}
+                      to="/payments/overview"
+                      selected={location.pathname === '/payments/overview'}
+                      sx={{ pl: 3 }}
+                    >
+                      <ListItemIcon><AccountBalanceWalletIcon fontSize="small" /></ListItemIcon>
+                      <ListItemText primary="Wallet" />
+                    </ListItemButton>
+                  </ListItem>
+                  <ListItem disablePadding sx={{ display: 'block' }}>
+                    <ListItemButton
+                      component={NavLink}
+                      to="/payments/transactions"
+                      selected={location.pathname === '/payments/transactions'}
+                      sx={{ pl: 3 }}
+                    >
+                      <ListItemIcon><SwapHorizIcon fontSize="small" /></ListItemIcon>
+                      <ListItemText primary="Transactions" />
+                    </ListItemButton>
+                  </ListItem>
+                  <ListItem disablePadding sx={{ display: 'block' }}>
+                    <ListItemButton
+                      component={NavLink}
+                      to="/payments/records"
+                      selected={location.pathname === '/payments/records'}
+                      sx={{ pl: 3 }}
+                    >
+                      <ListItemIcon><ReceiptLongIcon fontSize="small" /></ListItemIcon>
+                      <ListItemText primary="Payments" />
+                    </ListItemButton>
+                  </ListItem>
+                </List>
+              </Collapse>
             </List>
-          </Collapse>
 
-          {isSuperuser && (
-            <>
-              <Divider sx={{ my: 1 }} />
-              <Typography
-                variant="overline"
-                color="text.secondary"
-                sx={{ px: 2, fontSize: 11 }}
+            {isSuperuser && (
+              <List
+                dense
+                subheader={
+                  <Typography variant="caption" color="text.secondary" sx={{ px: 2, fontWeight: 500 }}>
+                    PLATFORM
+                  </Typography>
+                }
               >
-                Platform
-              </Typography>
+                <ListItem disablePadding sx={{ display: 'block' }}>
+                  <ListItemButton component={NavLink} to="/users" selected={location.pathname === '/users'}>
+                    <ListItemIcon><ManageAccountsIcon fontSize="small" /></ListItemIcon>
+                    <ListItemText primary="Users" />
+                  </ListItemButton>
+                </ListItem>
+                <ListItem disablePadding sx={{ display: 'block' }}>
+                  <ListItemButton
+                    component={NavLink}
+                    to="/organizations"
+                    selected={location.pathname === '/organizations'}
+                  >
+                    <ListItemIcon><CorporateFareIcon fontSize="small" /></ListItemIcon>
+                    <ListItemText primary="Organizations" />
+                  </ListItemButton>
+                </ListItem>
+                <ListItem disablePadding sx={{ display: 'block' }}>
+                  <ListItemButton
+                    component={NavLink}
+                    to="/payment-providers"
+                    selected={location.pathname === '/payment-providers'}
+                  >
+                    <ListItemIcon><AccountBalanceIcon fontSize="small" /></ListItemIcon>
+                    <ListItemText primary="Payment providers" />
+                  </ListItemButton>
+                </ListItem>
+              </List>
+            )}
+          </Stack>
+        </Box>
 
-              <ListItemButton
-                component={NavLink}
-                to="/users"
-                sx={{ borderRadius: 1.5, mb: 0.5, mt: 0.5 }}
-              >
-                <ListItemIcon sx={{ minWidth: 36 }}><ManageAccountsIcon fontSize="small" /></ListItemIcon>
-                <ListItemText primary="Users" slotProps={{ primary: { fontSize: 14 } }} />
-              </ListItemButton>
-
-              <ListItemButton
-                component={NavLink}
-                to="/organizations"
-                sx={{ borderRadius: 1.5, mb: 0.5 }}
-              >
-                <ListItemIcon sx={{ minWidth: 36 }}><CorporateFareIcon fontSize="small" /></ListItemIcon>
-                <ListItemText primary="Organizations" slotProps={{ primary: { fontSize: 14 } }} />
-              </ListItemButton>
-
-              <ListItemButton
-                component={NavLink}
-                to="/payment-providers"
-                sx={{ borderRadius: 1.5, mb: 0.5 }}
-              >
-                <ListItemIcon sx={{ minWidth: 36 }}><AccountBalanceIcon fontSize="small" /></ListItemIcon>
-                <ListItemText primary="Payment providers" slotProps={{ primary: { fontSize: 14 } }} />
-              </ListItemButton>
-            </>
-          )}
-        </List>
+        <Stack
+          direction="row"
+          sx={{ p: 2, gap: 1, alignItems: 'center', borderTop: '1px solid', borderColor: 'divider' }}
+        >
+          <Avatar sx={{ width: 36, height: 36, bgcolor: 'primary.main', fontSize: 14 }}>
+            {(user?.first_name?.[0] || user?.email?.[0] || 'A').toUpperCase()}
+          </Avatar>
+          <Box sx={{ mr: 'auto', overflow: 'hidden' }}>
+            <Typography variant="body2" noWrap sx={{ fontWeight: 500, lineHeight: '16px' }}>
+              {user?.full_name || 'Admin'}
+            </Typography>
+            <Typography variant="caption" noWrap sx={{ color: 'text.secondary', display: 'block' }}>
+              {user?.email}
+            </Typography>
+          </Box>
+          <OptionsMenu />
+        </Stack>
       </Drawer>
 
-      <Box sx={{ flexGrow: 1, display: 'flex', flexDirection: 'column' }}>
-        <AppBar position="sticky" elevation={0} color="transparent">
-          <Toolbar sx={{ justifyContent: 'flex-end' }}>
-            <IconButton onClick={(e) => setAnchorEl(e.currentTarget)} size="small">
-              <Avatar sx={{ width: 32, height: 32, bgcolor: 'primary.main', fontSize: 14 }}>
-                {(user?.first_name?.[0] || user?.email?.[0] || 'A').toUpperCase()}
-              </Avatar>
-            </IconButton>
-            <Menu anchorEl={anchorEl} open={!!anchorEl} onClose={() => setAnchorEl(null)}>
-              <MenuItem
-                onClick={() => {
-                  setAnchorEl(null);
-                  navigate('/profile');
-                }}
-              >
-                <ListItemIcon><PersonIcon fontSize="small" /></ListItemIcon>
-                Profile
-              </MenuItem>
-              <MenuItem onClick={handleLogout}>
-                <ListItemIcon><LogoutIcon fontSize="small" /></ListItemIcon>
-                Log out
-              </MenuItem>
-            </Menu>
-          </Toolbar>
-        </AppBar>
-
-        <Box component="main" sx={{ flexGrow: 1, p: 4, maxWidth: 1280 }}>
+      <Box
+        component="main"
+        sx={{ flexGrow: 1, backgroundColor: 'background.default', minHeight: '100vh', overflow: 'auto' }}
+      >
+        <Stack spacing={2} sx={{ mx: 3, pb: 5, pt: 2 }}>
+          <Stack
+            direction="row"
+            sx={{ alignItems: 'center', justifyContent: 'space-between', pt: 1.5 }}
+          >
+            <Stack direction="row" spacing={0.5} sx={{ alignItems: 'center' }}>
+              <Typography variant="body1" color="text.secondary">Event Admin</Typography>
+              <NavigateNextRoundedIcon fontSize="small" sx={{ color: 'action.disabled' }} />
+              <Typography variant="body1" sx={{ color: 'text.primary', fontWeight: 600 }}>
+                {pageTitle}
+              </Typography>
+            </Stack>
+            <ColorModeIconDropdown />
+          </Stack>
           <Outlet />
-        </Box>
+        </Stack>
       </Box>
     </Box>
   );
