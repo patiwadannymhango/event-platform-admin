@@ -18,6 +18,7 @@ import UploadFileIcon from '@mui/icons-material/UploadFileOutlined';
 import DownloadIcon from '@mui/icons-material/DownloadOutlined';
 import AddIcon from '@mui/icons-material/AddOutlined';
 import DeleteIcon from '@mui/icons-material/DeleteOutline';
+import WarningAmberIcon from '@mui/icons-material/WarningAmberOutlined';
 import {
   bulkUploadRegistrations,
   createRegistrationManually,
@@ -84,6 +85,10 @@ export default function Registrations() {
     first_name: '', last_name: '', email: '', phone: '', category_id: '',
   });
 
+  const [deleteTarget, setDeleteTarget] = useState<AdminRegistration | null>(null);
+  const [deleteBusy, setDeleteBusy] = useState(false);
+  const [deleteError, setDeleteError] = useState('');
+
   function load() {
     setLoading(true);
     setError('');
@@ -108,13 +113,30 @@ export default function Registrations() {
     }
   }
 
-  async function handleDelete(id: string) {
-    if (!confirm('Delete this registration? This cannot be undone.')) return;
+  function openDeleteDialog(row: AdminRegistration) {
+    setDeleteTarget(row);
+    setDeleteError('');
+  }
+
+  function closeDeleteDialog() {
+    if (deleteBusy) return;
+    setDeleteTarget(null);
+    setDeleteError('');
+  }
+
+  async function handleConfirmDelete() {
+    if (!deleteTarget) return;
+    setDeleteBusy(true);
+    setDeleteError('');
     try {
-      await deleteRegistration(id);
+      await deleteRegistration(deleteTarget.id);
+      setDeleteTarget(null);
+      setNotice('Registration deleted.');
       load();
     } catch (err) {
-      setError(err instanceof Error ? err.message : 'Failed to delete.');
+      setDeleteError(err instanceof Error ? err.message : 'Failed to delete.');
+    } finally {
+      setDeleteBusy(false);
     }
   }
 
@@ -211,7 +233,7 @@ export default function Registrations() {
           {
             field: 'actions', headerName: '', width: 60, sortable: false, filterable: false,
             renderCell: (params: { row: AdminRegistration }) => (
-              <Button size="small" color="error" onClick={() => handleDelete(params.row.id)} sx={{ minWidth: 0 }}>
+              <Button size="small" color="error" onClick={() => openDeleteDialog(params.row)} sx={{ minWidth: 0 }}>
                 <DeleteIcon fontSize="small" />
               </Button>
             ),
@@ -340,6 +362,44 @@ export default function Registrations() {
           <Button onClick={() => setManualOpen(false)}>Cancel</Button>
           <Button variant="contained" onClick={handleManualCreate} disabled={manualBusy}>
             {manualBusy ? 'Saving…' : 'Register (marks as Confirmed)'}
+          </Button>
+        </DialogActions>
+      </Dialog>
+
+      {/* Delete confirmation modal */}
+      <Dialog open={!!deleteTarget} onClose={closeDeleteDialog} maxWidth="xs" fullWidth>
+        <DialogTitle sx={{ display: 'flex', alignItems: 'center', gap: 1.25 }}>
+          <Box
+            sx={{
+              display: 'flex', alignItems: 'center', justifyContent: 'center',
+              width: 36, height: 36, borderRadius: '50%',
+              bgcolor: 'error.main', color: 'error.contrastText', opacity: 0.9,
+            }}
+          >
+            <WarningAmberIcon fontSize="small" />
+          </Box>
+          Delete registration?
+        </DialogTitle>
+        <DialogContent>
+          <Typography variant="body2" color="text.secondary">
+            Are you sure you want to delete{' '}
+            <Typography component="span" variant="body2" fontWeight={700} color="text.primary">
+              {deleteTarget?.registration_number}
+            </Typography>
+            {deleteTarget && (
+              <>
+                {' '}(
+                {deleteTarget.participant.first_name} {deleteTarget.participant.last_name})
+              </>
+            )}
+            ? This cannot be undone.
+          </Typography>
+          {deleteError && <Alert severity="error" sx={{ mt: 2 }}>{deleteError}</Alert>}
+        </DialogContent>
+        <DialogActions>
+          <Button onClick={closeDeleteDialog} disabled={deleteBusy}>Cancel</Button>
+          <Button variant="contained" color="error" onClick={handleConfirmDelete} disabled={deleteBusy}>
+            {deleteBusy ? 'Deleting…' : 'Delete'}
           </Button>
         </DialogActions>
       </Dialog>
