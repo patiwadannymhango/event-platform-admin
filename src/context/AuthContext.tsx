@@ -10,9 +10,14 @@ interface AuthContextValue {
   user: AdminUser | null;
   organizations: Organization[];
   isSuperuser: boolean;
-  // This admin is currently single-event (VITE_EVENT_ID) — the caller's
-  // effective role for that one event, or null if they have no access
-  // to it at all.
+  // This admin is single-event (VITE_EVENT_ID) — the organization that
+  // owns that event, resolved from the caller's own memberships. Null
+  // for a superuser with no membership row of their own; callers that
+  // need it unconditionally (e.g. to assign roles) fall back to an
+  // explicit lookup (see api/organizations.ts).
+  primaryOrganization: Organization | null;
+  // The caller's effective role for that one event, or null if they
+  // have no access to it at all.
   eventRole: string | null;
   hasRole: (...roles: string[]) => boolean;
   login: (email: string, password: string) => Promise<void>;
@@ -68,6 +73,9 @@ export function AuthProvider({ children }: { children: ReactNode }) {
 
   const isSuperuser = !!user?.is_superuser;
 
+  const primaryOrganization =
+    organizations.find((org) => org.events.some((event) => event.id === EVENT_ID)) ?? null;
+
   const eventRole =
     organizations.flatMap((org) => org.events).find((event) => event.id === EVENT_ID)?.role ??
     null;
@@ -85,6 +93,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
         user,
         organizations,
         isSuperuser,
+        primaryOrganization,
         eventRole,
         hasRole,
         login,

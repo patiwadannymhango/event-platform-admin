@@ -1,7 +1,6 @@
 import { BrowserRouter, Routes, Route, Navigate } from 'react-router-dom';
-import { CssBaseline, Box, CircularProgress } from '@mui/material';
+import { Box, CircularProgress } from '@mui/material';
 import AppTheme from './theme/AppTheme';
-import { dataGridCustomizations } from './theme/customizations/dataGrid';
 import { AuthProvider, useAuth } from './context/AuthContext';
 import Layout from './components/Layout';
 import Login from './pages/Login';
@@ -12,8 +11,6 @@ import PaymentsTransactions from './pages/PaymentsTransactions';
 import PaymentsRecords from './pages/PaymentsRecords';
 import Profile from './pages/Profile';
 import Users from './pages/Users';
-import Organizations from './pages/Organizations';
-import Events from './pages/Events';
 import PaymentProviders from './pages/PaymentProviders';
 import Participants from './pages/Participants';
 import Notifications from './pages/Notifications';
@@ -39,8 +36,7 @@ function SuperuserRoute({ children }: { children: React.ReactNode }) {
 
 export default function App() {
   return (
-    <AppTheme themeComponents={{ ...dataGridCustomizations }}>
-      <CssBaseline enableColorScheme />
+    <AppTheme>
       <AuthProvider>
         {/* import.meta.env.BASE_URL is Vite's `base` (defaults to '/'
             now that this deploys standalone on Vercel), so the routes
@@ -64,20 +60,11 @@ export default function App() {
               <Route path="/payments/overview" element={<PaymentsOverview />} />
               <Route path="/payments/transactions" element={<PaymentsTransactions />} />
               <Route path="/payments/records" element={<PaymentsRecords />} />
-              <Route path="/events" element={<Events />} />
               <Route
                 path="/users"
                 element={
                   <SuperuserRoute>
                     <Users />
-                  </SuperuserRoute>
-                }
-              />
-              <Route
-                path="/organizations"
-                element={
-                  <SuperuserRoute>
-                    <Organizations />
                   </SuperuserRoute>
                 }
               />

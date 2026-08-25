@@ -19,5 +19,3 @@ export const EVENT_REGISTRATION_MANAGE_ROLES = [
 ];
 
 export const EVENT_FINANCE_ROLES = ['OWNER', 'ADMIN', 'FINANCE'];
-
-export const EVENT_ADMIN_ROLES = ['OWNER', 'ADMIN'];

@@ -20,7 +20,7 @@ import AddIcon from '@mui/icons-material/AddOutlined';
 import { createUser, deactivateUser, listUsers, updateUser } from '../api/users';
 import type { AdminUserRecord } from '../api/users';
 import { listOrganizations } from '../api/organizations';
-import type { OrgRecord } from '../api/organizations';
+import { useAuth } from '../context/AuthContext';
 
 const ORG_ROLES = ['OWNER', 'ADMIN', 'FINANCE', 'REGISTRATION', 'EVENT_MANAGER', 'VIEWER'];
 
@@ -31,13 +31,13 @@ const emptyForm = {
   phone: '',
   password: '',
   is_superuser: false,
-  organization_id: '',
   role: '',
 };
 
 export default function Users() {
+  const { primaryOrganization } = useAuth();
+  const [orgId, setOrgId] = useState('');
   const [rows, setRows] = useState<AdminUserRecord[]>([]);
-  const [orgs, setOrgs] = useState<OrgRecord[]>([]);
   const [search, setSearch] = useState('');
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState('');
@@ -57,9 +57,17 @@ export default function Users() {
   }
 
   useEffect(load, []); // eslint-disable-line react-hooks/exhaustive-deps
+
+  // Single-org deployment — resolve it from the caller's own membership
+  // (primaryOrganization), falling back to the platform's org list for a
+  // bare superuser account with no membership row of its own.
   useEffect(() => {
-    listOrganizations().then(setOrgs).catch(() => {});
-  }, []);
+    if (primaryOrganization) {
+      setOrgId(primaryOrganization.id);
+    } else {
+      listOrganizations().then((orgs) => setOrgId(orgs[0]?.id ?? '')).catch(() => {});
+    }
+  }, [primaryOrganization]);
 
   async function handleCreate() {
     setCreateBusy(true);
@@ -72,8 +80,8 @@ export default function Users() {
         phone: form.phone,
         password: form.password,
         is_superuser: form.is_superuser,
-        ...(form.organization_id && form.role
-          ? { organization_id: form.organization_id, role: form.role }
+        ...(!form.is_superuser && orgId && form.role
+          ? { organization_id: orgId, role: form.role }
           : {}),
       });
       setNotice('User created.');
@@ -110,18 +118,14 @@ export default function Users() {
     { field: 'full_name', headerName: 'Name', flex: 1, minWidth: 160 },
     { field: 'email', headerName: 'Email', flex: 1, minWidth: 200 },
     {
-      field: 'organization_memberships',
-      headerName: 'Organizations',
-      flex: 1,
-      minWidth: 220,
+      field: 'role',
+      headerName: 'Role',
+      width: 160,
       sortable: false,
-      renderCell: (params) => (
-        <Stack direction="row" spacing={0.5} sx={{ flexWrap: 'wrap', py: 0.5 }}>
-          {params.row.organization_memberships.map((m) => (
-            <Chip key={m.id} size="small" label={`${m.organization_name}: ${m.role}`} />
-          ))}
-        </Stack>
-      ),
+      renderCell: (params) => {
+        const role = params.row.organization_memberships.find((m) => m.organization_id === orgId)?.role;
+        return role ? <Chip size="small" label={role} /> : null;
+      },
     },
     {
       field: 'is_superuser',
@@ -159,7 +163,7 @@ export default function Users() {
   return (
     <Stack spacing={2}>
       <Stack direction="row" justifyContent="space-between" alignItems="center">
-        <Typography variant="h5" fontWeight={800}>Users</Typography>
+        <Typography variant="h5" fontWeight={800}>Admin users</Typography>
         <Button startIcon={<AddIcon />} variant="contained" onClick={() => setCreateOpen(true)}>
           New user
         </Button>
@@ -206,33 +210,18 @@ export default function Users() {
               label="Superuser (full access to everything)"
             />
             {!form.is_superuser && (
-              <>
-                <TextField
-                  select
-                  label="Organization (optional)"
-                  value={form.organization_id}
-                  onChange={(e) => setForm({ ...form, organization_id: e.target.value, role: e.target.value ? form.role : '' })}
-                  fullWidth
-                >
-                  <MenuItem value="">— none —</MenuItem>
-                  {orgs.map((org) => (
-                    <MenuItem key={org.id} value={org.id}>{org.name}</MenuItem>
-                  ))}
-                </TextField>
-                {form.organization_id && (
-                  <TextField
-                    select
-                    label="Role in that organization"
-                    value={form.role}
-                    onChange={(e) => setForm({ ...form, role: e.target.value })}
-                    fullWidth
-                  >
-                    {ORG_ROLES.map((r) => (
-                      <MenuItem key={r} value={r}>{r}</MenuItem>
-                    ))}
-                  </TextField>
-                )}
-              </>
+              <TextField
+                select
+                label="Role in Copper Belt Marathon"
+                value={form.role}
+                onChange={(e) => setForm({ ...form, role: e.target.value })}
+                fullWidth
+              >
+                <MenuItem value="">— none —</MenuItem>
+                {ORG_ROLES.map((r) => (
+                  <MenuItem key={r} value={r}>{r}</MenuItem>
+                ))}
+              </TextField>
             )}
           </Stack>
         </DialogContent>

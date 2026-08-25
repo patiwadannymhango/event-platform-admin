@@ -25,17 +25,18 @@ import {
 } from '../api/paymentProviders';
 import type { PaymentAccountRecord, PaymentProviderRecord } from '../api/paymentProviders';
 import { listOrganizations } from '../api/organizations';
-import type { OrgRecord } from '../api/organizations';
+import { useAuth } from '../context/AuthContext';
 
 const emptyProviderForm = { name: '', code: '', provider_type: 'LIPILA' as 'LIPILA' | 'OTHER' };
 const emptyAccountForm = {
-  organization: '', provider: '', account_type: 'WALLET' as 'WALLET' | 'MERCHANT', name: '', provider_account_id: '', currency: 'ZMW',
+  provider: '', account_type: 'WALLET' as 'WALLET' | 'MERCHANT', name: '', provider_account_id: '', currency: 'ZMW',
 };
 
 export default function PaymentProviders() {
+  const { primaryOrganization } = useAuth();
+  const [orgId, setOrgId] = useState('');
   const [providers, setProviders] = useState<PaymentProviderRecord[]>([]);
   const [accounts, setAccounts] = useState<PaymentAccountRecord[]>([]);
-  const [orgs, setOrgs] = useState<OrgRecord[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState('');
   const [notice, setNotice] = useState('');
@@ -51,17 +52,27 @@ export default function PaymentProviders() {
   function load() {
     setLoading(true);
     setError('');
-    Promise.all([listPaymentProviders(), listPaymentAccounts(), listOrganizations()])
-      .then(([p, a, o]) => {
+    Promise.all([listPaymentProviders(), listPaymentAccounts()])
+      .then(([p, a]) => {
         setProviders(p);
         setAccounts(a);
-        setOrgs(o);
       })
       .catch((err) => setError(err instanceof Error ? err.message : 'Failed to load.'))
       .finally(() => setLoading(false));
   }
 
   useEffect(load, []);
+
+  // Single-org deployment — resolve it from the caller's own membership
+  // (primaryOrganization), falling back to the platform's org list for a
+  // bare superuser account with no membership row of its own.
+  useEffect(() => {
+    if (primaryOrganization) {
+      setOrgId(primaryOrganization.id);
+    } else {
+      listOrganizations().then((orgs) => setOrgId(orgs[0]?.id ?? '')).catch(() => {});
+    }
+  }, [primaryOrganization]);
 
   async function handleCreateProvider() {
     setProviderBusy(true);
@@ -88,7 +99,7 @@ export default function PaymentProviders() {
     setAccountBusy(true);
     setError('');
     try {
-      await createPaymentAccount(accountForm);
+      await createPaymentAccount({ ...accountForm, organization: orgId });
       setNotice('Payment account created.');
       setAccountOpen(false);
       setAccountForm(emptyAccountForm);
@@ -117,7 +128,6 @@ export default function PaymentProviders() {
 
   const accountColumns: GridColDef<PaymentAccountRecord>[] = [
     { field: 'name', headerName: 'Name', flex: 1, minWidth: 160 },
-    { field: 'organization_name', headerName: 'Organization', flex: 1, minWidth: 160 },
     { field: 'provider_name', headerName: 'Provider', width: 140 },
     { field: 'account_type', headerName: 'Type', width: 110 },
     { field: 'currency', headerName: 'Currency', width: 90 },
@@ -144,7 +154,7 @@ export default function PaymentProviders() {
       <Stack spacing={2}>
         <Stack direction="row" justifyContent="space-between" alignItems="center">
           <Typography variant="h5" fontWeight={800}>Payment accounts</Typography>
-          <Button startIcon={<AddIcon />} variant="contained" onClick={() => setAccountOpen(true)}>New account</Button>
+          <Button startIcon={<AddIcon />} variant="contained" onClick={() => setAccountOpen(true)} disabled={!orgId}>New account</Button>
         </Stack>
         <Box sx={{ height: 300 }}>
           <DataGrid rows={accounts} columns={accountColumns} loading={loading} density="compact" disableRowSelectionOnClick />
@@ -175,9 +185,6 @@ export default function PaymentProviders() {
         <DialogTitle>New payment account</DialogTitle>
         <DialogContent>
           <Stack spacing={2} sx={{ mt: 1 }}>
-            <TextField select label="Organization" value={accountForm.organization} onChange={(e) => setAccountForm({ ...accountForm, organization: e.target.value })} fullWidth>
-              {orgs.map((org) => <MenuItem key={org.id} value={org.id}>{org.name}</MenuItem>)}
-            </TextField>
             <TextField select label="Provider" value={accountForm.provider} onChange={(e) => setAccountForm({ ...accountForm, provider: e.target.value })} fullWidth>
               {providers.map((p) => <MenuItem key={p.id} value={p.id}>{p.name}</MenuItem>)}
             </TextField>
@@ -195,7 +202,7 @@ export default function PaymentProviders() {
           <Button
             variant="contained"
             onClick={handleCreateAccount}
-            disabled={accountBusy || !accountForm.organization || !accountForm.provider || !accountForm.name}
+            disabled={accountBusy || !orgId || !accountForm.provider || !accountForm.name}
           >
             {accountBusy ? 'Saving…' : 'Create'}
           </Button>
