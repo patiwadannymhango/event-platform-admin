@@ -1,4 +1,4 @@
-import { apiFetch, EVENT_ID } from './client';
+import { apiFetch, apiFetchBlob, EVENT_ID } from './client';
 import type { AdminRegistration, Paginated } from '../types';
 
 export async function listRegistrations(params: {
@@ -71,4 +71,11 @@ export async function listCategories(): Promise<RegistrationCategory[]> {
     `/api/v1/registrations/public/events/${EVENT_ID}/form/`
   );
   return form.categories;
+}
+
+// A plain <a href> here would skip the Authorization header entirely (the
+// export endpoint requires it) and just open a 401 error page instead of
+// downloading anything — fetched as a blob and saved client-side instead.
+export async function downloadExport(): Promise<Blob> {
+  return apiFetchBlob(`/api/v1/registrations/admin/events/${EVENT_ID}/registrations/export/`);
 }

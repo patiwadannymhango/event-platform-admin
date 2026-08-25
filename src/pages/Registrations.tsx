@@ -22,11 +22,11 @@ import {
   bulkUploadRegistrations,
   createRegistrationManually,
   deleteRegistration,
+  downloadExport,
   listCategories,
   listRegistrations,
   updateRegistrationStatus,
 } from '../api/registrations';
-import { exportUrl } from '../api/client';
 import type { AdminRegistration } from '../types';
 import type { RegistrationCategory } from '../api/registrations';
 import { STATUS_OPTIONS } from '../types';
@@ -70,6 +70,7 @@ export default function Registrations() {
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState('');
   const [notice, setNotice] = useState('');
+  const [exportBusy, setExportBusy] = useState(false);
 
   const [uploadOpen, setUploadOpen] = useState(false);
   const [uploadFile, setUploadFile] = useState<File | null>(null);
@@ -114,6 +115,26 @@ export default function Registrations() {
       load();
     } catch (err) {
       setError(err instanceof Error ? err.message : 'Failed to delete.');
+    }
+  }
+
+  async function handleExport() {
+    setExportBusy(true);
+    setError('');
+    try {
+      const blob = await downloadExport();
+      const url = URL.createObjectURL(blob);
+      const a = document.createElement('a');
+      a.href = url;
+      a.download = 'registrations.xlsx';
+      document.body.appendChild(a);
+      a.click();
+      a.remove();
+      URL.revokeObjectURL(url);
+    } catch (err) {
+      setError(err instanceof Error ? err.message : 'Export failed.');
+    } finally {
+      setExportBusy(false);
     }
   }
 
@@ -214,8 +235,8 @@ export default function Registrations() {
               </Button>
             </>
           )}
-          <Button startIcon={<DownloadIcon />} variant="contained" href={exportUrl()} target="_blank" rel="noreferrer">
-            Export
+          <Button startIcon={<DownloadIcon />} variant="contained" onClick={handleExport} disabled={exportBusy}>
+            {exportBusy ? 'Exporting…' : 'Export'}
           </Button>
         </Stack>
       </Stack>

@@ -87,14 +87,49 @@ export async function apiFetch<T>(path: string, options: RequestOptions = {}): P
 
   if (!res.ok) {
     const errorBody = await res.json().catch(() => ({}));
+    // DRF renders a plain-string ValidationError (e.g. the delete-blocked
+    // case) as a raw JSON array, not {detail: ...} — check for that before
+    // falling back to a raw JSON dump.
+    const arrayMessage = Array.isArray(errorBody) && typeof errorBody[0] === 'string' ? errorBody[0] : null;
     throw new Error(
-      errorBody?.detail || JSON.stringify(errorBody) || `Request failed (${res.status})`
+      errorBody?.detail || arrayMessage || JSON.stringify(errorBody) || `Request failed (${res.status})`
     );
   }
 
   if (res.status === 204) return undefined as T;
 
   return res.json();
+}
+
+// For binary downloads (e.g. Excel export) that can't go through apiFetch's
+// res.json() parsing — shares the same 401-refresh-retry flow so an export
+// doesn't silently fail just because the access token expired mid-session.
+export async function apiFetchBlob(path: string): Promise<Blob> {
+  async function doFetch(): Promise<Response> {
+    const headers: Record<string, string> = {};
+    const token = getAccessToken();
+    if (token) headers['Authorization'] = `Bearer ${token}`;
+    return fetch(`${API_BASE_URL}${path}`, { headers });
+  }
+
+  let res = await doFetch();
+
+  if (res.status === 401) {
+    const refreshed = await refreshAccessToken();
+    if (refreshed) {
+      res = await doFetch();
+    } else {
+      clearTokens();
+      window.location.href = '/login';
+      throw new Error('Session expired. Please log in again.');
+    }
+  }
+
+  if (!res.ok) {
+    throw new Error(`Export failed (${res.status}).`);
+  }
+
+  return res.blob();
 }
 
 export async function login(email: string, password: string) {
@@ -111,10 +146,6 @@ export async function login(email: string, password: string) {
   const data = await res.json();
   setTokens(data.access, data.refresh);
   return data;
-}
-
-export function exportUrl(): string {
-  return `${API_BASE_URL}/api/v1/registrations/admin/events/${EVENT_ID}/registrations/export/`;
 }
 
 export { API_BASE_URL };
