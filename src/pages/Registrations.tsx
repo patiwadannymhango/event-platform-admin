@@ -227,6 +227,10 @@ export default function Registrations() {
     { field: 'category_name', headerName: 'Category', width: 160 },
     { field: 'amount', headerName: 'Amount', width: 100, valueFormatter: (v) => `K${v}` },
     {
+      field: 'payment_reference', headerName: 'Payment Ref. (Lipila)', width: 200,
+      renderCell: (params) => params.value || <span style={{ opacity: 0.4 }}>—</span>,
+    },
+    {
       field: 'status', headerName: 'Status', width: 180,
       renderCell: (params) => (
         <StatusCell

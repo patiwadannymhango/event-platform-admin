@@ -20,6 +20,7 @@ export interface AdminRegistration {
   event: string;
   event_name: string;
   form_data: Record<string, string>;
+  payment_reference: string;
   registered_at: string;
   updated_at: string;
 }
