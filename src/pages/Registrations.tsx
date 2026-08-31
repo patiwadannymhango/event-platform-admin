@@ -3,6 +3,7 @@ import {
   Alert,
   Box,
   Button,
+  Chip,
   Dialog,
   DialogActions,
   DialogContent,
@@ -11,6 +12,7 @@ import {
   Select,
   Stack,
   TextField,
+  Tooltip,
   Typography,
 } from '@mui/material';
 import { DataGrid, type GridColDef, type GridRowParams } from '@mui/x-data-grid';
@@ -19,6 +21,9 @@ import DownloadIcon from '@mui/icons-material/DownloadOutlined';
 import AddIcon from '@mui/icons-material/AddOutlined';
 import DeleteIcon from '@mui/icons-material/DeleteOutline';
 import WarningAmberIcon from '@mui/icons-material/WarningAmberOutlined';
+import PublicOutlinedIcon from '@mui/icons-material/PublicOutlined';
+import AdminPanelSettingsOutlinedIcon from '@mui/icons-material/AdminPanelSettingsOutlined';
+import HelpOutlineOutlinedIcon from '@mui/icons-material/HelpOutlineOutlined';
 import RegistrationDetailDialog from '../components/RegistrationDetailDialog';
 import {
   bulkUploadRegistrations,
@@ -243,6 +248,35 @@ export default function Registrations() {
           onChange={(status) => handleStatusChange(params.row.id, status)}
         />
       ),
+    },
+    {
+      field: 'source', headerName: 'Source', width: 170, sortable: false, filterable: false,
+      renderCell: (params) => {
+        const row = params.row as AdminRegistration;
+        if (row.created_via === 'ADMIN') {
+          return (
+            <Tooltip
+              title={row.created_by ? `Added by ${row.created_by.full_name} (${row.created_by.email})` : 'Admin dashboard'}
+            >
+              <Chip
+                size="small"
+                color="secondary"
+                variant="outlined"
+                icon={<AdminPanelSettingsOutlinedIcon />}
+                label={row.created_by?.full_name || 'Admin'}
+              />
+            </Tooltip>
+          );
+        }
+        if (row.created_via === 'PUBLIC') {
+          return <Chip size="small" color="info" variant="outlined" icon={<PublicOutlinedIcon />} label="Website" />;
+        }
+        return (
+          <Tooltip title="Registered before this was tracked">
+            <Chip size="small" variant="outlined" icon={<HelpOutlineOutlinedIcon />} label="Unknown" />
+          </Tooltip>
+        );
+      },
     },
     {
       field: 'registered_at', headerName: 'Registered', width: 130,

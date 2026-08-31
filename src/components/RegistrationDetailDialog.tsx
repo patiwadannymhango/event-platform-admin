@@ -132,6 +132,17 @@ export default function RegistrationDetailDialog({
             <Grid item xs={6} sm={3}>
               <ReadOnlyField label="Registered" value={new Date(registration.registered_at).toLocaleString()} />
             </Grid>
+            <Grid item xs={6} sm={3}>
+              <ReadOnlyField label="Source" value={registration.created_via_display} />
+            </Grid>
+            {registration.created_by && (
+              <Grid item xs={6} sm={3}>
+                <ReadOnlyField
+                  label="Created by"
+                  value={`${registration.created_by.full_name} (${registration.created_by.email})`}
+                />
+              </Grid>
+            )}
           </Grid>
 
           <Divider />

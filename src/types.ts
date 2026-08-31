@@ -8,6 +8,11 @@ export interface Participant {
   gender: string;
 }
 
+export interface CreatedBy {
+  full_name: string;
+  email: string;
+}
+
 export interface AdminRegistration {
   id: string;
   registration_number: string;
@@ -21,6 +26,9 @@ export interface AdminRegistration {
   event_name: string;
   form_data: Record<string, string>;
   payment_reference: string;
+  created_via: 'PUBLIC' | 'ADMIN' | 'UNKNOWN';
+  created_via_display: string;
+  created_by: CreatedBy | null;
   registered_at: string;
   updated_at: string;
 }
