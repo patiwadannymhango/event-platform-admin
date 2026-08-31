@@ -24,7 +24,6 @@ import ExpandMore from '@mui/icons-material/ExpandMore';
 import ReceiptLongIcon from '@mui/icons-material/ReceiptLongRounded';
 import AccountBalanceWalletIcon from '@mui/icons-material/AccountBalanceWalletRounded';
 import SwapHorizIcon from '@mui/icons-material/SwapHorizRounded';
-import BadgeIcon from '@mui/icons-material/BadgeRounded';
 import NotificationsIcon from '@mui/icons-material/NotificationsRounded';
 import ManageAccountsIcon from '@mui/icons-material/ManageAccountsRounded';
 import AccountBalanceIcon from '@mui/icons-material/AccountBalanceRounded';
@@ -38,7 +37,6 @@ const DRAWER_WIDTH = 260;
 const PAGE_TITLES: Record<string, string> = {
   '/': 'Dashboard',
   '/registrations': 'Registrations',
-  '/participants': 'Participants',
   '/notifications': 'Notifications',
   '/payments/overview': 'Wallet',
   '/payments/transactions': 'Transactions',
@@ -101,17 +99,6 @@ export default function Layout() {
                 >
                   <ListItemIcon><PeopleIcon fontSize="small" /></ListItemIcon>
                   <ListItemText primary="Registrations" />
-                </ListItemButton>
-              </ListItem>
-
-              <ListItem disablePadding sx={{ display: 'block' }}>
-                <ListItemButton
-                  component={NavLink}
-                  to="/participants"
-                  selected={location.pathname === '/participants'}
-                >
-                  <ListItemIcon><BadgeIcon fontSize="small" /></ListItemIcon>
-                  <ListItemText primary="Participants" />
                 </ListItemButton>
               </ListItem>
 

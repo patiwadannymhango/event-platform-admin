@@ -12,7 +12,6 @@ import PaymentsRecords from './pages/PaymentsRecords';
 import Profile from './pages/Profile';
 import Users from './pages/Users';
 import PaymentProviders from './pages/PaymentProviders';
-import Participants from './pages/Participants';
 import Notifications from './pages/Notifications';
 
 function ProtectedRoute({ children }: { children: React.ReactNode }) {
@@ -55,7 +54,6 @@ export default function App() {
             >
               <Route path="/" element={<Dashboard />} />
               <Route path="/registrations" element={<Registrations />} />
-              <Route path="/participants" element={<Participants />} />
               <Route path="/notifications" element={<Notifications />} />
               <Route path="/payments/overview" element={<PaymentsOverview />} />
               <Route path="/payments/transactions" element={<PaymentsTransactions />} />

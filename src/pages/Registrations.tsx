@@ -212,6 +212,18 @@ export default function Registrations() {
       field: 'name', headerName: 'Runner', flex: 1, minWidth: 160,
       valueGetter: (_value, row) => `${row.participant.first_name} ${row.participant.last_name}`,
     },
+    {
+      field: 'email', headerName: 'Email', flex: 1, minWidth: 190,
+      valueGetter: (_value, row) => row.participant.email,
+    },
+    {
+      field: 'phone', headerName: 'Phone', width: 140,
+      valueGetter: (_value, row) => row.participant.phone,
+    },
+    {
+      field: 'gender', headerName: 'Gender', width: 100,
+      valueGetter: (_value, row) => row.participant.gender,
+    },
     { field: 'category_name', headerName: 'Category', width: 160 },
     { field: 'amount', headerName: 'Amount', width: 100, valueFormatter: (v) => `K${v}` },
     {
