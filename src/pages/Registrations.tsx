@@ -13,12 +13,13 @@ import {
   TextField,
   Typography,
 } from '@mui/material';
-import { DataGrid, type GridColDef } from '@mui/x-data-grid';
+import { DataGrid, type GridColDef, type GridRowParams } from '@mui/x-data-grid';
 import UploadFileIcon from '@mui/icons-material/UploadFileOutlined';
 import DownloadIcon from '@mui/icons-material/DownloadOutlined';
 import AddIcon from '@mui/icons-material/AddOutlined';
 import DeleteIcon from '@mui/icons-material/DeleteOutline';
 import WarningAmberIcon from '@mui/icons-material/WarningAmberOutlined';
+import RegistrationDetailDialog from '../components/RegistrationDetailDialog';
 import {
   bulkUploadRegistrations,
   createRegistrationManually,
@@ -49,6 +50,7 @@ function StatusCell({
     <Select
       value={row.status}
       onChange={(e) => onChange(e.target.value)}
+      onClick={(e) => e.stopPropagation()}
       size="small"
       variant="standard"
       sx={{ fontSize: 13 }}
@@ -88,6 +90,8 @@ export default function Registrations() {
   const [deleteTarget, setDeleteTarget] = useState<AdminRegistration | null>(null);
   const [deleteBusy, setDeleteBusy] = useState(false);
   const [deleteError, setDeleteError] = useState('');
+
+  const [detailTarget, setDetailTarget] = useState<AdminRegistration | null>(null);
 
   function load() {
     setLoading(true);
@@ -222,7 +226,7 @@ export default function Registrations() {
     },
     {
       field: 'gender', headerName: 'Gender', width: 100,
-      valueGetter: (_value, row) => row.participant.gender,
+      valueGetter: (_value, row) => row.form_data.gender || row.participant.gender,
     },
     { field: 'category_name', headerName: 'Category', width: 160 },
     { field: 'amount', headerName: 'Amount', width: 100, valueFormatter: (v) => `K${v}` },
@@ -249,7 +253,12 @@ export default function Registrations() {
           {
             field: 'actions', headerName: '', width: 60, sortable: false, filterable: false,
             renderCell: (params: { row: AdminRegistration }) => (
-              <Button size="small" color="error" onClick={() => openDeleteDialog(params.row)} sx={{ minWidth: 0 }}>
+              <Button
+                size="small"
+                color="error"
+                onClick={(e) => { e.stopPropagation(); openDeleteDialog(params.row); }}
+                sx={{ minWidth: 0 }}
+              >
                 <DeleteIcon fontSize="small" />
               </Button>
             ),
@@ -316,6 +325,8 @@ export default function Registrations() {
           pageSizeOptions={[25]}
           disableRowSelectionOnClick
           density="compact"
+          onRowClick={(params: GridRowParams<AdminRegistration>) => setDetailTarget(params.row)}
+          sx={{ '& .MuiDataGrid-row': { cursor: 'pointer' } }}
         />
       </Box>
 
@@ -419,6 +430,16 @@ export default function Registrations() {
           </Button>
         </DialogActions>
       </Dialog>
+
+      <RegistrationDetailDialog
+        registration={detailTarget}
+        onClose={() => setDetailTarget(null)}
+        onSaved={() => {
+          setNotice('Registration updated.');
+          load();
+        }}
+        canManage={canManageRegistrations}
+      />
     </Stack>
   );
 }

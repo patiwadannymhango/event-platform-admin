@@ -31,6 +31,32 @@ export async function deleteRegistration(id: string) {
   });
 }
 
+// Same field set as "Register participant", minus email — the backend
+// rejects the whole request outright if an "email" key is present at all
+// (it's fixed once the registration exists), so this UI never offers it.
+export async function updateRegistrationDetails(
+  id: string,
+  payload: {
+    first_name?: string;
+    last_name?: string;
+    phone?: string;
+    gender?: string;
+    age_range?: string;
+    country?: string;
+    tshirt_size?: string;
+    attendance_type?: string;
+    club_or_institution?: string;
+    emergency_contact_name?: string;
+    emergency_contact_phone?: string;
+    medical_notes?: string;
+  }
+): Promise<AdminRegistration> {
+  return apiFetch<AdminRegistration>(`/api/v1/registrations/admin/registrations/${id}/details/`, {
+    method: 'PATCH',
+    body: payload,
+  });
+}
+
 export async function createRegistrationManually(payload: {
   category_id: string;
   participant: Record<string, string>;
