@@ -49,9 +49,10 @@ const PAGE_TITLES: Record<string, string> = {
 export default function Layout() {
   const { isSuperuser } = useAuth();
   const location = useLocation();
-  const [paymentsOpen, setPaymentsOpen] = useState(true);
-
   const isPaymentsSection = location.pathname.startsWith('/payments');
+  // Closed by default — but starts open if you're deep-linked straight
+  // into a Payments/Wallet sub-page, so the active item isn't hidden.
+  const [paymentsOpen, setPaymentsOpen] = useState(isPaymentsSection);
   const pageTitle = PAGE_TITLES[location.pathname] || 'Dashboard';
 
   return (
