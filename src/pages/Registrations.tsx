@@ -347,7 +347,7 @@ export default function Registrations() {
         <Button variant="contained" onClick={() => { setPage(0); load(); }}>Search</Button>
       </Stack>
 
-      <Box sx={{ height: 560 }}>
+      <Box sx={{ height: 780 }}>
         <DataGrid
           rows={rows}
           columns={columns}
