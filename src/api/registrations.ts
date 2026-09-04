@@ -69,27 +69,79 @@ export async function createRegistrationManually(payload: {
   );
 }
 
-export async function bulkUploadRegistrations(file: File) {
-  const formData = new FormData();
-  formData.append('file', file);
-
-  return apiFetch<{
-    created_count: number;
-    created_references: string[];
-    error_count: number;
-    errors: { row: number; error: string }[];
-  }>(`/api/v1/registrations/admin/events/${EVENT_ID}/registrations/bulk-upload/`, {
-    method: 'POST',
-    body: formData,
-    isFormData: true,
-  });
-}
-
 export interface RegistrationCategory {
   id: string;
   name: string;
   code: string;
   price: string | number;
+  currency: string;
+}
+
+// --- Bulk upload -----------------------------------------------------
+
+export interface BulkUploadRow {
+  first_name?: string;
+  last_name?: string;
+  email?: string;
+  phone?: string;
+  category_code?: string;
+  status?: string;
+  gender?: string;
+  age_range?: string;
+  country?: string;
+  tshirt_size?: string;
+  attendance_type?: string;
+  club_or_institution?: string;
+  emergency_contact_name?: string;
+  emergency_contact_phone?: string;
+  medical_notes?: string;
+  [key: string]: string | undefined;
+}
+
+export interface BulkUploadRowResult {
+  row: number;
+  valid: boolean;
+  errors: string[];
+  warnings: string[];
+  data?: BulkUploadRow;
+  reference?: string;
+}
+
+export interface BulkUploadReport {
+  created_count: number;
+  created_references: string[];
+  error_count: number;
+  errors: { row: number; error: string }[];
+  results: BulkUploadRowResult[];
+}
+
+// Same-shaped download as the registrations export — requires the auth
+// header, so it goes through apiFetchBlob rather than a plain <a href>.
+export async function downloadBulkUploadTemplate(): Promise<Blob> {
+  return apiFetchBlob(
+    `/api/v1/registrations/admin/events/${EVENT_ID}/registrations/bulk-upload/template/`
+  );
+}
+
+// Dry run: parses the file and reports which rows would succeed/fail, but
+// creates nothing. Powers the review screen.
+export async function previewBulkUpload(file: File): Promise<BulkUploadReport> {
+  const formData = new FormData();
+  formData.append('file', file);
+  return apiFetch<BulkUploadReport>(
+    `/api/v1/registrations/admin/events/${EVENT_ID}/registrations/bulk-upload/preview/`,
+    { method: 'POST', body: formData, isFormData: true }
+  );
+}
+
+// The real thing — takes the (possibly hand-edited) rows from the review
+// screen as JSON rather than re-uploading a file, so edits actually take
+// effect. Runs through the exact same validation as the preview above.
+export async function commitBulkUpload(rows: BulkUploadRow[]): Promise<BulkUploadReport> {
+  return apiFetch<BulkUploadReport>(
+    `/api/v1/registrations/admin/events/${EVENT_ID}/registrations/bulk-upload/`,
+    { method: 'POST', body: { rows } }
+  );
 }
 
 export async function listCategories(): Promise<RegistrationCategory[]> {

@@ -8,6 +8,7 @@ import {
   DialogActions,
   DialogContent,
   DialogTitle,
+  Grid,
   MenuItem,
   Select,
   Stack,
@@ -25,8 +26,8 @@ import PublicOutlinedIcon from '@mui/icons-material/PublicOutlined';
 import AdminPanelSettingsOutlinedIcon from '@mui/icons-material/AdminPanelSettingsOutlined';
 import HelpOutlineOutlinedIcon from '@mui/icons-material/HelpOutlineOutlined';
 import RegistrationDetailDialog from '../components/RegistrationDetailDialog';
+import BulkUploadWizard from '../components/BulkUploadWizard';
 import {
-  bulkUploadRegistrations,
   createRegistrationManually,
   deleteRegistration,
   downloadExport,
@@ -39,6 +40,7 @@ import type { RegistrationCategory } from '../api/registrations';
 import { STATUS_OPTIONS } from '../types';
 import { useAuth } from '../context/AuthContext';
 import { EVENT_REGISTRATION_MANAGE_ROLES } from '../roles';
+import { GENDER_OPTIONS, AGE_RANGE_OPTIONS, TSHIRT_SIZE_OPTIONS, ATTENDANCE_TYPE_OPTIONS } from '../utils/formOptions';
 
 function StatusCell({
   row,
@@ -80,17 +82,18 @@ export default function Registrations() {
   const [notice, setNotice] = useState('');
   const [exportBusy, setExportBusy] = useState(false);
 
-  const [uploadOpen, setUploadOpen] = useState(false);
-  const [uploadFile, setUploadFile] = useState<File | null>(null);
-  const [uploadBusy, setUploadBusy] = useState(false);
-  const [uploadReport, setUploadReport] = useState('');
+  const [bulkUploadOpen, setBulkUploadOpen] = useState(false);
 
   const [manualOpen, setManualOpen] = useState(false);
   const [manualBusy, setManualBusy] = useState(false);
   const [categories, setCategories] = useState<RegistrationCategory[]>([]);
-  const [manualForm, setManualForm] = useState({
+  const emptyManualForm = {
     first_name: '', last_name: '', email: '', phone: '', category_id: '',
-  });
+    gender: '', age_range: '', country: '', tshirt_size: '', attendance_type: '',
+    club_or_institution: '', emergency_contact_name: '', emergency_contact_phone: '',
+    medical_notes: '', status: 'CONFIRMED',
+  };
+  const [manualForm, setManualForm] = useState(emptyManualForm);
 
   const [deleteTarget, setDeleteTarget] = useState<AdminRegistration | null>(null);
   const [deleteBusy, setDeleteBusy] = useState(false);
@@ -169,21 +172,6 @@ export default function Registrations() {
     }
   }
 
-  async function handleUpload() {
-    if (!uploadFile) return;
-    setUploadBusy(true);
-    setUploadReport('');
-    try {
-      const report = await bulkUploadRegistrations(uploadFile);
-      setUploadReport(`Created ${report.created_count}. ${report.error_count} error(s).`);
-      load();
-    } catch (err) {
-      setUploadReport(err instanceof Error ? err.message : 'Upload failed.');
-    } finally {
-      setUploadBusy(false);
-    }
-  }
-
   async function handleManualCreate() {
     setManualBusy(true);
     setError('');
@@ -196,10 +184,22 @@ export default function Registrations() {
           email: manualForm.email,
           phone: manualForm.phone,
         },
-        status: 'CONFIRMED',
+        form_data: {
+          gender: manualForm.gender,
+          age_range: manualForm.age_range,
+          country: manualForm.country,
+          tshirt_size: manualForm.tshirt_size,
+          attendance_type: manualForm.attendance_type,
+          club_or_institution: manualForm.club_or_institution,
+          emergency_contact_name: manualForm.emergency_contact_name,
+          emergency_contact_phone: manualForm.emergency_contact_phone,
+          medical_notes: manualForm.medical_notes,
+        },
+        status: manualForm.status,
       });
+      setNotice('Person registered.');
       setManualOpen(false);
-      setManualForm({ first_name: '', last_name: '', email: '', phone: '', category_id: '' });
+      setManualForm(emptyManualForm);
       load();
     } catch (err) {
       setError(err instanceof Error ? err.message : 'Failed to register participant.');
@@ -208,11 +208,20 @@ export default function Registrations() {
     }
   }
 
-  function openManualDialog() {
-    setManualOpen(true);
+  function ensureCategoriesLoaded() {
     if (categories.length === 0) {
       listCategories().then(setCategories).catch(() => {});
     }
+  }
+
+  function openManualDialog() {
+    setManualOpen(true);
+    ensureCategoriesLoaded();
+  }
+
+  function openBulkUploadDialog() {
+    setBulkUploadOpen(true);
+    ensureCategoriesLoaded();
   }
 
   const columns: GridColDef<AdminRegistration>[] = [
@@ -311,7 +320,7 @@ export default function Registrations() {
               <Button startIcon={<AddIcon />} variant="outlined" onClick={openManualDialog}>
                 Register participant
               </Button>
-              <Button startIcon={<UploadFileIcon />} variant="outlined" onClick={() => setUploadOpen(true)}>
+              <Button startIcon={<UploadFileIcon />} variant="outlined" onClick={openBulkUploadDialog}>
                 Bulk upload
               </Button>
             </>
@@ -364,65 +373,137 @@ export default function Registrations() {
         />
       </Box>
 
-      {/* Bulk upload modal */}
-      <Dialog open={uploadOpen} onClose={() => setUploadOpen(false)} maxWidth="sm" fullWidth>
-        <DialogTitle>Bulk upload registrations</DialogTitle>
-        <DialogContent>
-          <Typography variant="body2" color="text.secondary" sx={{ mb: 2 }}>
-            CSV or XLSX with columns: first_name, last_name, category_code (email, phone,
-            status optional).
-          </Typography>
-          <Button component="label" variant="outlined">
-            {uploadFile ? uploadFile.name : 'Choose file'}
-            <input
-              type="file"
-              hidden
-              accept=".csv,.xlsx"
-              onChange={(e) => setUploadFile(e.target.files?.[0] ?? null)}
-            />
-          </Button>
-          {uploadReport && <Alert severity="info" sx={{ mt: 2 }}>{uploadReport}</Alert>}
-        </DialogContent>
-        <DialogActions>
-          <Button onClick={() => setUploadOpen(false)}>Close</Button>
-          <Button variant="contained" onClick={handleUpload} disabled={!uploadFile || uploadBusy}>
-            {uploadBusy ? 'Uploading…' : 'Upload'}
-          </Button>
-        </DialogActions>
-      </Dialog>
+      <BulkUploadWizard
+        open={bulkUploadOpen}
+        onClose={() => setBulkUploadOpen(false)}
+        categories={categories}
+        onUploaded={() => {
+          setNotice('Bulk upload complete.');
+          load();
+        }}
+      />
 
       {/* Manual registration modal */}
-      <Dialog open={manualOpen} onClose={() => setManualOpen(false)} maxWidth="sm" fullWidth>
+      <Dialog open={manualOpen} onClose={() => setManualOpen(false)} maxWidth="md" fullWidth>
         <DialogTitle>Register a participant</DialogTitle>
         <DialogContent>
-          <Stack spacing={2} sx={{ mt: 1 }}>
-            <TextField label="First name" value={manualForm.first_name}
-              onChange={(e) => setManualForm({ ...manualForm, first_name: e.target.value })} fullWidth />
-            <TextField label="Last name" value={manualForm.last_name}
-              onChange={(e) => setManualForm({ ...manualForm, last_name: e.target.value })} fullWidth />
-            <TextField label="Email" value={manualForm.email}
-              onChange={(e) => setManualForm({ ...manualForm, email: e.target.value })} fullWidth />
-            <TextField label="Phone" value={manualForm.phone}
-              onChange={(e) => setManualForm({ ...manualForm, phone: e.target.value })} fullWidth />
-            <TextField
-              select
-              label="Race category"
-              value={manualForm.category_id}
-              onChange={(e) => setManualForm({ ...manualForm, category_id: e.target.value })}
-              fullWidth
-            >
-              {categories.map((c) => (
-                <MenuItem key={c.id} value={c.id}>
-                  {c.name}{Number(c.price) > 0 ? ` — K${c.price}` : ' — Custom pricing'}
-                </MenuItem>
-              ))}
-            </TextField>
+          <Stack spacing={3} sx={{ mt: 0.5 }}>
+            <Typography variant="subtitle2" fontWeight={700}>Participant</Typography>
+            <Grid container spacing={2}>
+              <Grid item xs={12} sm={6}>
+                <TextField label="First name" value={manualForm.first_name} fullWidth size="small"
+                  onChange={(e) => setManualForm({ ...manualForm, first_name: e.target.value })} />
+              </Grid>
+              <Grid item xs={12} sm={6}>
+                <TextField label="Last name" value={manualForm.last_name} fullWidth size="small"
+                  onChange={(e) => setManualForm({ ...manualForm, last_name: e.target.value })} />
+              </Grid>
+              <Grid item xs={12} sm={6}>
+                <TextField label="Email" value={manualForm.email} fullWidth size="small"
+                  onChange={(e) => setManualForm({ ...manualForm, email: e.target.value })} />
+              </Grid>
+              <Grid item xs={12} sm={6}>
+                <TextField label="Phone" value={manualForm.phone} fullWidth size="small"
+                  onChange={(e) => setManualForm({ ...manualForm, phone: e.target.value })} />
+              </Grid>
+              <Grid item xs={12} sm={6}>
+                <TextField
+                  select label="Race category" value={manualForm.category_id} fullWidth size="small"
+                  onChange={(e) => setManualForm({ ...manualForm, category_id: e.target.value })}
+                >
+                  <MenuItem value="">Select a race…</MenuItem>
+                  {categories.map((c) => (
+                    <MenuItem key={c.id} value={c.id}>
+                      {c.name}{Number(c.price) > 0 ? ` — K${c.price}` : ' — Custom pricing'}
+                    </MenuItem>
+                  ))}
+                </TextField>
+              </Grid>
+              <Grid item xs={12} sm={6}>
+                <TextField
+                  select label="Status" value={manualForm.status} fullWidth size="small"
+                  onChange={(e) => setManualForm({ ...manualForm, status: e.target.value })}
+                >
+                  {STATUS_OPTIONS.map((s) => <MenuItem key={s} value={s}>{s}</MenuItem>)}
+                </TextField>
+              </Grid>
+            </Grid>
+
+            <Typography variant="subtitle2" fontWeight={700}>Additional details</Typography>
+            <Grid container spacing={2}>
+              <Grid item xs={12} sm={6}>
+                <TextField
+                  select label="Gender" value={manualForm.gender} fullWidth size="small"
+                  onChange={(e) => setManualForm({ ...manualForm, gender: e.target.value })}
+                >
+                  <MenuItem value="">—</MenuItem>
+                  {GENDER_OPTIONS.map((g) => <MenuItem key={g} value={g}>{g}</MenuItem>)}
+                </TextField>
+              </Grid>
+              <Grid item xs={12} sm={6}>
+                <TextField
+                  select label="Age range" value={manualForm.age_range} fullWidth size="small"
+                  onChange={(e) => setManualForm({ ...manualForm, age_range: e.target.value })}
+                >
+                  <MenuItem value="">—</MenuItem>
+                  {AGE_RANGE_OPTIONS.map((a) => <MenuItem key={a} value={a}>{a}</MenuItem>)}
+                </TextField>
+              </Grid>
+              <Grid item xs={12} sm={6}>
+                <TextField label="Country" value={manualForm.country} fullWidth size="small" placeholder="Zambia"
+                  onChange={(e) => setManualForm({ ...manualForm, country: e.target.value })} />
+              </Grid>
+              <Grid item xs={12} sm={6}>
+                <TextField
+                  select label="T-shirt size" value={manualForm.tshirt_size} fullWidth size="small"
+                  onChange={(e) => setManualForm({ ...manualForm, tshirt_size: e.target.value })}
+                >
+                  <MenuItem value="">—</MenuItem>
+                  {TSHIRT_SIZE_OPTIONS.map((s) => <MenuItem key={s} value={s}>{s}</MenuItem>)}
+                </TextField>
+              </Grid>
+              <Grid item xs={12} sm={6}>
+                <TextField
+                  select label="Attendance type" value={manualForm.attendance_type} fullWidth size="small"
+                  onChange={(e) => setManualForm({ ...manualForm, attendance_type: e.target.value })}
+                >
+                  <MenuItem value="">—</MenuItem>
+                  {ATTENDANCE_TYPE_OPTIONS.map((a) => <MenuItem key={a.value} value={a.value}>{a.label}</MenuItem>)}
+                </TextField>
+              </Grid>
+              <Grid item xs={12} sm={6}>
+                <TextField label="Club / institution" value={manualForm.club_or_institution} fullWidth size="small"
+                  onChange={(e) => setManualForm({ ...manualForm, club_or_institution: e.target.value })} />
+              </Grid>
+              <Grid item xs={12} sm={6}>
+                <TextField label="Emergency contact name" value={manualForm.emergency_contact_name} fullWidth size="small"
+                  onChange={(e) => setManualForm({ ...manualForm, emergency_contact_name: e.target.value })} />
+              </Grid>
+              <Grid item xs={12} sm={6}>
+                <TextField label="Emergency contact phone" value={manualForm.emergency_contact_phone} fullWidth size="small"
+                  onChange={(e) => setManualForm({ ...manualForm, emergency_contact_phone: e.target.value })} />
+              </Grid>
+              <Grid item xs={12}>
+                <TextField label="Medical notes" value={manualForm.medical_notes} fullWidth size="small" multiline minRows={2}
+                  onChange={(e) => setManualForm({ ...manualForm, medical_notes: e.target.value })} />
+              </Grid>
+            </Grid>
           </Stack>
         </DialogContent>
         <DialogActions>
           <Button onClick={() => setManualOpen(false)}>Cancel</Button>
-          <Button variant="contained" onClick={handleManualCreate} disabled={manualBusy}>
-            {manualBusy ? 'Saving…' : 'Register (marks as Confirmed)'}
+          <Button
+            variant="contained"
+            onClick={handleManualCreate}
+            disabled={
+              manualBusy ||
+              !manualForm.first_name ||
+              !manualForm.last_name ||
+              !manualForm.category_id ||
+              !manualForm.attendance_type
+            }
+          >
+            {manualBusy ? 'Saving…' : 'Register'}
           </Button>
         </DialogActions>
       </Dialog>
