@@ -27,3 +27,13 @@ export async function listEventNotifications(params: {
   );
   return Array.isArray(data) ? data : data.results;
 }
+
+// Re-sends a previously logged email — to its original recipient (omit
+// `recipient`) or to a corrected address the admin types in. Always
+// creates a new log row rather than mutating the original.
+export async function resendNotification(id: string, recipient?: string): Promise<NotificationRecord> {
+  return apiFetch<NotificationRecord>(
+    `/api/v1/notifications/admin/events/${EVENT_ID}/notifications/${id}/resend/`,
+    { method: 'POST', body: recipient ? { recipient } : {} }
+  );
+}
